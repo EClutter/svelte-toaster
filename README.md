@@ -1,38 +1,28 @@
-# create-svelte
+# Svelte 5 Toast Component
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/main/packages/create-svelte).
+A simple toast notification system for Svelte 5, based on [Huntabyte's](https://github.com/huntabyte) original toast component. Just using this as a testing ground. 
 
-## Creating a project
+## Features
+- 5 variants (default, info, success, warning, error)
+- Auto-dismiss
+- Pause on hover
+- TypeScript support
 
-If you're seeing this, you've probably already done this step. Congrats!
+## Usage
 
-```bash
-# create a new project in the current directory
-npx sv create
+```typescript
+// In your root layout
+import { setToastState } from '$lib/toast-state.svelte';
+setToastState();
 
-# create a new project in my-app
-npx sv create my-app
+// In any component
+import { useToast } from "$lib/toast-state.svelte";
+
+const toast = useToast();
+
+toast.default("Title", "Message");
+toast.info("Title", "Message");
+toast.success("Title", "Message");
+toast.warning("Title", "Message");
+toast.error("Title", "Message");
 ```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.

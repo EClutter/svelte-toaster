@@ -3,36 +3,51 @@ import type { Toast } from './types/types';
 
 export class ToastState {
     toasts = $state<Toast[]>([]);
-    toastToTimeoutMap = new Map<string, number>();
+    private timeouts = new Map<string, number>();
+    private remainingDurations = new Map<string, number>();
+    private startTimes = new Map<string, number>();
 
-    constructor() {
-        onDestroy(() => {
-            for (const timeout of this.toastToTimeoutMap.values()) {
-                clearTimeout(timeout);
-            }
-            this.toastToTimeoutMap.clear();
-        });
-    }
-
-    add(title: string, message: string, variant: Toast['variant'] = 'default', durationMs = 5000) {
+    add(title: string, message: string, variant: Toast['variant'] = 'default', duration = 5000) {
         const id = crypto.randomUUID();
         this.toasts.push({ id, variant, title, message });
+        this.remainingDurations.set(id, duration);
+        this.startTimeout(id);
+    }
 
-        this.toastToTimeoutMap.set(
-            id,
-            setTimeout(() => {
-                this.remove(id);
-            }, durationMs)
-        );
+    private startTimeout(id: string) {
+        const duration = this.remainingDurations.get(id) ?? 0;
+        this.startTimes.set(id, Date.now());
+        
+        this.timeouts.set(id, setTimeout(() => this.remove(id), duration));
+    }
+
+    pauseToast(id: string) {
+        const timeout = this.timeouts.get(id);
+        const startTime = this.startTimes.get(id);
+        
+        if (timeout && startTime) {
+            clearTimeout(timeout);
+            this.remainingDurations.set(
+                id, 
+                (this.remainingDurations.get(id) ?? 0) - (Date.now() - startTime)
+            );
+            this.timeouts.delete(id);
+            this.startTimes.delete(id);
+        }
+    }
+
+    resumeToast(id: string) {
+        if (this.remainingDurations.has(id)) {
+            this.startTimeout(id);
+        }
     }
 
     remove(id: string) {
-        const timeout = this.toastToTimeoutMap.get(id);
-        if (timeout) {
-            clearTimeout(timeout);
-            this.toastToTimeoutMap.delete(id);
-        }
-        this.toasts = this.toasts.filter((toast) => toast.id !== id);
+        clearTimeout(this.timeouts.get(id));
+        this.timeouts.delete(id);
+        this.remainingDurations.delete(id);
+        this.startTimes.delete(id);
+        this.toasts = this.toasts.filter(t => t.id !== id);
     }
 }
 
